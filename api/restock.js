@@ -1,10 +1,13 @@
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const { query } = req.body;
+  const query = req.method === 'GET' 
+    ? (req.query.q || '테스트') 
+    : req.body?.query;
+
   const NOTION_KEY = process.env.NOTION_KEY;
   const DB_ID = '5d2ae3562c064494b6b1f0fc6469aa8a';
 
