@@ -8,6 +8,12 @@ module.exports = async function handler(req, res) {
     ? (req.query.q || '')
     : (req.body && req.body.query) || '';
 
+  // 괄호 안 내용 제거
+  let cleaned = raw;
+  cleaned = cleaned.replace(/\(.*?\)/g, '');
+  cleaned = cleaned.replace(/\[.*?\]/g, '');
+
+  // 불필요한 단어 제거
   const removeWords = [
     '입고일은', '입고일', '재입고', '언제예요', '언제요', '언제',
     '알려줘', '알려주세요', '확인', '문의', '어때요', '어때',
@@ -16,7 +22,6 @@ module.exports = async function handler(req, res) {
     '세트', '상하복', '상의', '하의', '후드', '집업'
   ];
 
-  let cleaned = raw;
   removeWords.forEach(function(word) {
     cleaned = cleaned.split(word).join('');
   });
@@ -48,12 +53,12 @@ module.exports = async function handler(req, res) {
   try {
     let data = await searchNotion(keyword);
 
-    // 결과 없으면 cleaned 전체로 재검색
+    // 2차: 결과 없으면 cleaned 전체로 재검색
     if (!data.results || !data.results.length) {
       data = await searchNotion(cleaned);
     }
 
-    // 그래도 없으면 원본으로 재검색
+    // 3차: 그래도 없으면 원본으로 재검색
     if (!data.results || !data.results.length) {
       data = await searchNotion(raw.trim());
     }
