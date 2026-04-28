@@ -8,6 +8,14 @@ module.exports = async function handler(req, res) {
     ? (req.query.q || '')
     : (req.body && req.body.query) || '';
 
+  // 오늘 날짜 (한국 시간 기준)
+  const today = new Date().toLocaleDateString('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).replace(/\. /g, '-').replace('.', '');
+
   // 괄호 안 내용 제거
   let cleaned = raw;
   cleaned = cleaned.replace(/\(.*?\)/g, '');
@@ -53,12 +61,10 @@ module.exports = async function handler(req, res) {
   try {
     let data = await searchNotion(keyword);
 
-    // 2차: 결과 없으면 cleaned 전체로 재검색
     if (!data.results || !data.results.length) {
       data = await searchNotion(cleaned);
     }
 
-    // 3차: 그래도 없으면 원본으로 재검색
     if (!data.results || !data.results.length) {
       data = await searchNotion(raw.trim());
     }
@@ -76,7 +82,11 @@ module.exports = async function handler(req, res) {
       };
     });
 
-    res.status(200).json({ results: results, keyword_used: keyword });
+    res.status(200).json({ 
+      results: results, 
+      keyword_used: keyword,
+      today: today
+    });
   } catch(e) {
     res.status(500).json({ error: e.message });
   }
