@@ -8,13 +8,21 @@ module.exports = async function handler(req, res) {
     ? (req.query.q || '')
     : (req.body && req.body.query) || '';
 
-  const removeWords = ['입고일은', '입고일', '재입고', '언제예요', '언제요', '언제', '알려줘', '알려주세요', '확인', '문의'];
+  const removeWords = [
+    '입고일은', '입고일', '재입고', '언제예요', '언제요', '언제',
+    '알려줘', '알려주세요', '확인', '문의', '어때요', '어때',
+    '반팔', '긴팔', '티셔츠', '바지', '치마', '원피스',
+    '자켓', '코트', '니트', '가디건', '조끼', '점퍼',
+    '세트', '상하복', '상의', '하의', '후드', '집업'
+  ];
+
   let cleaned = raw;
   removeWords.forEach(function(word) {
     cleaned = cleaned.split(word).join('');
   });
   cleaned = cleaned.replace(/[?？!！~]/g, '').trim();
 
+  // "-" 이후 핵심 키워드 추출
   let keyword = cleaned.replace(/^[^-]*-\s*/, '').trim();
   if (keyword.length < 2) keyword = cleaned;
 
@@ -40,8 +48,14 @@ module.exports = async function handler(req, res) {
   try {
     let data = await searchNotion(keyword);
 
+    // 결과 없으면 cleaned 전체로 재검색
     if (!data.results || !data.results.length) {
       data = await searchNotion(cleaned);
+    }
+
+    // 그래도 없으면 원본으로 재검색
+    if (!data.results || !data.results.length) {
+      data = await searchNotion(raw.trim());
     }
 
     const results = (data.results || []).map(function(page) {
